@@ -2,117 +2,109 @@ import { useState, useEffect } from 'react';
 import { useSettings } from '../contexts/SettingsContext';
 
 export function GitHubStats() {
-    const { t, githubUsername, setGithubUsername } = useSettings();
+    const { githubUsername, setGithubUsername } = useSettings();
     const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
-    const [isEditing, setIsEditing] = useState(!githubUsername);
+    const [isEditing, setIsEditing] = useState(false);
+    const [tempUsername, setTempUsername] = useState(githubUsername || '');
 
     useEffect(() => {
-        if (githubUsername && !isEditing) {
-            fetchEvents();
-        }
-    }, [githubUsername, isEditing]);
+        if (!githubUsername) return;
 
-    const fetchEvents = async () => {
         setLoading(true);
-        setError(null);
-        try {
-            const response = await fetch(`https://api.github.com/users/${githubUsername}/events?per_page=5`);
-            if (!response.ok) throw new Error('User not found');
-            const data = await response.json();
-            setEvents(data);
-        } catch (err) {
-            setError(err.message);
-            setEvents([]);
-        } finally {
-            setLoading(false);
-        }
-    };
+        fetch(`https://api.github.com/users/${githubUsername}/events?per_page=5`)
+            .then(res => res.json())
+            .then(data => {
+                if (Array.isArray(data)) {
+                    setEvents(data);
+                }
+            })
+            .catch(() => { })
+            .finally(() => setLoading(false));
+    }, [githubUsername]);
 
     const handleSave = (e) => {
         e.preventDefault();
+        setGithubUsername(tempUsername);
         setIsEditing(false);
     };
 
-    const getEventIcon = (type) => {
-        switch (type) {
-            case 'PushEvent': return '🔨';
-            case 'CreateEvent': return '✨';
-            case 'PullRequestEvent': return '🔀';
-            case 'IssuesEvent': return '🐛';
-            case 'WatchEvent': return '⭐';
-            default: return '📦';
-        }
-    };
-
     const formatEvent = (event) => {
+        const date = new Date(event.created_at);
+        const timeAgo = ((Date.now() - date) / (1000 * 60 * 60)).toFixed(0);
+
         switch (event.type) {
             case 'PushEvent':
-                return `Pushed ${event.payload.size} commits to ${event.repo.name.split('/')[1]}`;
+                const commits = event.payload.commits?.length || 0;
+                return `Pushed ${commits} commit${commits > 1 ? 's' : ''} to ${event.repo.name}`;
             case 'CreateEvent':
-                return `Created ${event.payload.ref_type} in ${event.repo.name.split('/')[1]}`;
-            case 'PullRequestEvent':
-                return `Opened PR in ${event.repo.name.split('/')[1]}`;
+                return `Created ${event.payload.ref_type} in ${event.repo.name}`;
             case 'WatchEvent':
-                return `Starred ${event.repo.name.split('/')[1]}`;
+                return `Starred ${event.repo.name}`;
             default:
-                return event.type.replace('Event', '') + ` on ${event.repo.name.split('/')[1]}`;
+                return `${event.type.replace('Event', '')} on ${event.repo.name}`;
         }
     };
 
     return (
         <div className="glass-panel" style={{ padding: '1.5rem', borderRadius: 'var(--radius-lg)', height: '100%', display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                <h2>🐱 GitHub</h2>
-                <button onClick={() => setIsEditing(!isEditing)} style={{ opacity: 0.5, fontSize: '0.9rem', background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}>
-                    {isEditing ? 'Cancel' : 'Edit'}
+                <h2>💻 GitHub Activity</h2>
+                <button onClick={() => setIsEditing(!isEditing)} className="btn-icon">
+                    {isEditing ? '×' : '✏️'}
                 </button>
             </div>
 
-            {isEditing ? (
-                <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {isEditing && (
+                <form onSubmit={handleSave} style={{ marginBottom: '1rem', display: 'flex', gap: '0.5rem' }}>
                     <input
                         type="text"
-                        value={githubUsername}
-                        onChange={e => setGithubUsername(e.target.value)}
-                        placeholder="GitHub Username"
-                        style={{ padding: '0.8rem', borderRadius: 'var(--radius-md)', border: 'none', background: 'rgba(0,0,0,0.2)', color: 'white' }}
+                        value={tempUsername}
+                        onChange={(e) => setTempUsername(e.target.value)}
+                        placeholder="GitHub username..."
+                        style={{
+                            flex: 1,
+                            padding: '0.5rem',
+                            borderRadius: 'var(--radius-md)',
+                            border: '1px solid rgba(255,255,255,0.1)',
+                            background: 'rgba(0,0,0,0.2)',
+                            color: 'var(--text-primary)'
+                        }}
                     />
-                    <button type="submit" style={{ padding: '0.5rem', background: 'var(--accent-primary)', color: 'white', border: 'none', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}>
+                    <button type="submit" className="btn-primary">
                         Save
                     </button>
                 </form>
-            ) : (
-                <div style={{ flex: 1, overflowY: 'auto' }}>
-                    {loading && <div style={{ textAlign: 'center', opacity: 0.7 }}>Loading...</div>}
-                    {error && <div style={{ textAlign: 'center', color: 'var(--error)' }}>{error}</div>}
+            )}
 
-                    {!loading && !error && (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', paddingBottom: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-                                <img
-                                    src={`https://github.com/${githubUsername}.png`}
-                                    alt="avatar"
-                                    style={{ width: '30px', height: '30px', borderRadius: '50%' }}
-                                />
-                                <span style={{ fontWeight: 'bold' }}>{githubUsername}</span>
-                            </div>
+            {loading && <div style={{ textAlign: 'center', opacity: 0.5 }}>Loading...</div>}
 
-                            {events.map(event => (
-                                <div key={event.id} style={{ fontSize: '0.9rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                                    <span>{getEventIcon(event.type)}</span>
-                                    <span style={{ opacity: 0.8 }}>{formatEvent(event)}</span>
-                                </div>
-                            ))}
-
-                            {events.length === 0 && (
-                                <div style={{ textAlign: 'center', opacity: 0.5 }}>No recent public activity.</div>
-                            )}
-                        </div>
-                    )}
+            {!githubUsername && !isEditing && (
+                <div style={{ textAlign: 'center', opacity: 0.5, marginTop: '2rem' }}>
+                    Click ✏️ to set your GitHub username
                 </div>
             )}
+
+            <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                {events.map((event, idx) => (
+                    <div key={idx} style={{
+                        padding: '0.8rem',
+                        background: 'rgba(255,255,255,0.05)',
+                        borderRadius: 'var(--radius-md)',
+                        fontSize: '0.9rem'
+                    }}>
+                        <div style={{ marginBottom: '0.3rem' }}>{formatEvent(event)}</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            {new Date(event.created_at).toLocaleString('ru-RU', {
+                                month: 'short',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            })}
+                        </div>
+                    </div>
+                ))}
+            </div>
         </div>
     );
 }

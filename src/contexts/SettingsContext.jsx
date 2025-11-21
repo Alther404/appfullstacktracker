@@ -33,7 +33,7 @@ export const SettingsProvider = ({ children }) => {
     }, [githubUsername]);
 
     const t = (key) => {
-        return translations[language][key] || key;
+        return translations[language]?.[key] || translations['en'][key] || key;
     };
 
     const toggleTheme = () => {
@@ -42,6 +42,13 @@ export const SettingsProvider = ({ children }) => {
 
     const toggleLanguage = () => {
         setLanguage(prev => prev === 'en' ? 'ru' : 'en');
+    };
+
+    const resetProgress = () => {
+        if (confirm('Are you sure you want to reset ALL progress? This cannot be undone.')) {
+            localStorage.clear();
+            window.location.reload();
+        }
     };
 
     return (
@@ -53,7 +60,8 @@ export const SettingsProvider = ({ children }) => {
             toggleLanguage,
             t,
             githubUsername,
-            setGithubUsername
+            setGithubUsername,
+            resetProgress
         }}>
             {children}
         </SettingsContext.Provider>

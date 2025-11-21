@@ -12,21 +12,31 @@ export const useResources = () => {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(resources));
     }, [resources]);
 
-    const addResource = (url, title, type = 'article', tags = []) => {
+    const addResource = (url, title, type, category = 'General') => {
+        if (resources.some(r => r.url === url)) return;
+
         const newResource = {
             id: Date.now().toString(),
             url,
-            title: title || url,
-            type, // 'article', 'video', 'tool', 'other'
-            tags,
-            createdAt: new Date().toISOString()
+            title,
+            type, // 'video', 'article', 'tool'
+            category, // New field for categorization
+            addedAt: new Date().toISOString(),
+            completed: false
         };
+
         setResources(prev => [newResource, ...prev]);
     };
 
-    const deleteResource = (id) => {
-        setResources(prev => prev.filter(res => res.id !== id));
+    const removeResource = (id) => {
+        setResources(prev => prev.filter(r => r.id !== id));
     };
 
-    return { resources, addResource, deleteResource };
+    const toggleResourceComplete = (id) => {
+        setResources(prev => prev.map(r =>
+            r.id === id ? { ...r, completed: !r.completed } : r
+        ));
+    };
+
+    return { resources, addResource, removeResource, toggleResourceComplete };
 };

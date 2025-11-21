@@ -1,0 +1,13 @@
+directories:
+  output: dist-electron
+  buildResources: build
+appId: com.devjourney.app
+productName: DevJourney
+files:
+  - filter:
+      - dist/**/*
+      - electron/**/*
+win:
+  target: nsis
+  icon: public/icon.ico
+electronVersion: 39.2.3

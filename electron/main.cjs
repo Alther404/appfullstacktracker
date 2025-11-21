@@ -3,14 +3,16 @@ const path = require('path');
 
 function createWindow() {
   const win = new BrowserWindow({
-    width: 1200,
-    height: 800,
+    width: 1400,
+    height: 900,
+    icon: path.join(__dirname, '../public/icon.ico'),
     webPreferences: {
       nodeIntegration: true,
-      contextIsolation: false, // For simple local apps, this is easier. For production security, we'd use preload scripts.
+      contextIsolation: false,
+      webviewTag: true
     },
-    autoHideMenuBar: true, // Modern look
-    titleBarStyle: 'hidden', // Custom title bar if we want later, or just clean look
+    autoHideMenuBar: true,
+    titleBarStyle: 'hidden',
     titleBarOverlay: {
       color: '#000000',
       symbolColor: '#ffffff'
@@ -27,7 +29,6 @@ function createWindow() {
 
   if (isDev) {
     win.loadURL('http://localhost:5173');
-    // win.webContents.openDevTools(); // Open dev tools by default in dev
   } else {
     win.loadFile(path.join(__dirname, '../dist/index.html'));
   }

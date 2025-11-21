@@ -1,13 +1,31 @@
 import { useState } from 'react';
 import { useTasks } from '../hooks/useTasks';
+import { useResources } from '../hooks/useResources';
 import { curriculum } from '../data/curriculum';
 import { useSettings } from '../contexts/SettingsContext';
+import { QuizModal } from './QuizModal';
+import { useGamification } from '../hooks/useGamification';
 
 export function TaskBoard({ onTaskComplete }) {
-    const { tasks, addTask, updateTaskStatus, deleteTask } = useTasks();
-    const { t } = useSettings();
+    const { tasks, addTask, updateTaskStatus, deleteTask, completeTask } = useTasks();
+    const { addResource } = useResources();
+    const { addXP } = useGamification();
+    const { t, language } = useSettings();
+
     const [newTaskTitle, setNewTaskTitle] = useState('');
-    const [showCurriculum, setShowCurriculum] = useState(false);
+    // Removed showCurriculum state and button as requested
+
+    // Quiz State
+    const [quizTask, setQuizTask] = useState(null);
+    const [pendingTaskId, setPendingTaskId] = useState(null);
+    const [pendingTaskXP, setPendingTaskXP] = useState(0);
+
+    // Helper for localized text
+    const getLoc = (obj) => {
+        if (!obj) return '';
+        if (typeof obj === 'string') return obj;
+        return obj[language] || obj['en'] || '';
+    };
 
     const handleAdd = (e) => {
         e.preventDefault();
@@ -16,18 +34,64 @@ export function TaskBoard({ onTaskComplete }) {
         setNewTaskTitle('');
     };
 
-    const handleStatusChange = (id, newStatus, xp) => {
+    const handleStatusChange = (id, newStatus, xp, taskTitle) => {
+        // If moving to DONE, check for quiz
+        if (newStatus === 'done') {
+            // Find the task in curriculum to get the quiz
+            // We match by title (either EN or RU)
+            let foundTask = null;
+            for (const cat of curriculum) {
+                const t = cat.tasks.find(ct => {
+                    const tEn = ct.title['en'] || ct.title;
+                    const tRu = ct.title['ru'] || ct.title;
+                    return tEn === taskTitle || tRu === taskTitle;
+                });
+                if (t) {
+                    foundTask = t;
+                    break;
+                }
+            }
+
+            if (foundTask && (foundTask.quizzes?.length > 0 || foundTask.quiz)) {
+                // Trigger Quiz
+                setQuizTask(foundTask);
+                setPendingTaskId(id);
+                setPendingTaskXP(xp);
+                return; // Stop here, wait for quiz
+            }
+        }
+
+        // Normal update if no quiz or not moving to done
         updateTaskStatus(id, newStatus);
         if (newStatus === 'done' && onTaskComplete) {
             onTaskComplete(xp);
         }
     };
 
+    const onQuizPass = () => {
+        if (pendingTaskId) {
+            updateTaskStatus(pendingTaskId, 'done');
+            if (onTaskComplete) onTaskComplete(pendingTaskXP);
+            addXP(200); // Bonus for quiz
+        }
+        setQuizTask(null);
+        setPendingTaskId(null);
+        setPendingTaskXP(0);
+    };
+
     const columns = [
         { id: 'todo', label: t('todo'), color: 'var(--text-secondary)' },
-        { id: 'in-progress', label: t('inProgress'), color: 'var(--accent-primary)' },
+        { id: 'in_progress', label: t('inProgress'), color: 'var(--accent-primary)' }, // Fixed ID to match useTasks default? No, useTasks uses 'todo' default.
+        // Wait, useTasks 'addTask' uses 'todo' default, but NextStepWidget uses 'in_progress'.
+        // Let's ensure column IDs match what we use.
+        // NextStepWidget: 'in_progress'
+        // TaskBoard columns: 'todo', 'in-progress' (dash vs underscore). 
+        // FIX: Let's normalize to 'in_progress' (underscore) as used in NextStepWidget.
         { id: 'done', label: t('done'), color: 'var(--success)' }
     ];
+
+    // Normalize status for display if needed, but better to fix data.
+    // I will use 'in_progress' for the column ID.
 
     return (
         <div style={{ height: '100%', display: 'flex', gap: '1.5rem' }}>
@@ -50,31 +114,10 @@ export function TaskBoard({ onTaskComplete }) {
                                 fontSize: '1rem'
                             }}
                         />
-                        <button
-                            type="submit"
-                            style={{
-                                padding: '0 1.5rem',
-                                borderRadius: 'var(--radius-md)',
-                                background: 'var(--accent-primary)',
-                                color: 'white',
-                                fontWeight: '600'
-                            }}
-                        >
+                        <button type="submit" className="btn-primary">
                             {t('add')}
                         </button>
                     </form>
-                    <button
-                        onClick={() => setShowCurriculum(!showCurriculum)}
-                        className="glass-panel"
-                        style={{
-                            padding: '0 1rem',
-                            borderRadius: 'var(--radius-md)',
-                            color: 'var(--text-primary)',
-                            fontWeight: '600'
-                        }}
-                    >
-                        📚 {t('curriculum')}
-                    </button>
                 </div>
 
                 <div style={{
@@ -98,24 +141,35 @@ export function TaskBoard({ onTaskComplete }) {
                             </h3>
 
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', overflowY: 'auto' }}>
-                                {tasks.filter(t => t.status === col.id).map(task => (
+                                {tasks.filter(t => {
+                                    // Handle legacy 'in-progress' vs 'in_progress'
+                                    if (col.id === 'in_progress') return t.status === 'in_progress' || t.status === 'in-progress';
+                                    return t.status === col.id;
+                                }).map(task => (
                                     <div key={task.id} className="glass-panel" style={{
                                         padding: '1rem',
                                         borderRadius: 'var(--radius-sm)',
                                         cursor: 'grab',
                                         borderLeft: `3px solid ${col.color}`
                                     }}>
-                                        <div style={{ marginBottom: '0.5rem' }}>{task.title}</div>
+                                        <div style={{ marginBottom: '0.5rem' }}>
+                                            {getLoc(task.title)}
+                                        </div>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
                                             <span>+{task.xp} XP</span>
-                                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                            <div style={{ display: 'flex', gap: '0.25rem' }}>
                                                 {col.id !== 'todo' && (
-                                                    <button onClick={() => handleStatusChange(task.id, 'todo', 0)}>⏮</button>
+                                                    <button onClick={() => handleStatusChange(task.id, 'todo', 0, task.title)} className="btn-icon btn-sm">⏮</button>
                                                 )}
                                                 {col.id !== 'done' && (
-                                                    <button onClick={() => handleStatusChange(task.id, col.id === 'todo' ? 'in-progress' : 'done', task.xp)}>⏭</button>
+                                                    <button
+                                                        onClick={() => handleStatusChange(task.id, col.id === 'todo' ? 'in_progress' : 'done', task.xp, task.title)}
+                                                        className="btn-icon btn-sm"
+                                                    >
+                                                        ⏭
+                                                    </button>
                                                 )}
-                                                <button onClick={() => deleteTask(task.id)} style={{ color: 'var(--error)' }}>×</button>
+                                                <button onClick={() => deleteTask(task.id)} className="btn-icon btn-sm" style={{ color: 'var(--error)' }}>×</button>
                                             </div>
                                         </div>
                                     </div>
@@ -126,61 +180,15 @@ export function TaskBoard({ onTaskComplete }) {
                 </div>
             </div>
 
-            {/* Curriculum Sidebar */}
-            {showCurriculum && (
-                <div className="glass-panel" style={{
-                    width: '300px',
-                    borderRadius: 'var(--radius-md)',
-                    padding: '1rem',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '1rem',
-                    animation: 'slideLeft 0.3s ease'
-                }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <h3>{t('curriculum')}</h3>
-                        <button onClick={() => setShowCurriculum(false)}>×</button>
-                    </div>
-                    <div style={{ overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                        {curriculum.map((cat, idx) => (
-                            <div key={idx}>
-                                <h4 style={{ color: 'var(--accent-primary)', marginBottom: '0.5rem', fontSize: '0.9rem' }}>{cat.category}</h4>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                    {cat.tasks.map((task, tIdx) => (
-                                        <div key={tIdx} style={{
-                                            padding: '0.8rem',
-                                            background: 'rgba(255,255,255,0.05)',
-                                            borderRadius: 'var(--radius-sm)',
-                                            fontSize: '0.9rem'
-                                        }}>
-                                            <div style={{ marginBottom: '0.5rem' }}>{task.title}</div>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                <span style={{
-                                                    fontSize: '0.7rem',
-                                                    padding: '0.2rem 0.5rem',
-                                                    borderRadius: '10px',
-                                                    background: 'rgba(255,255,255,0.1)'
-                                                }}>
-                                                    {task.difficulty}
-                                                </span>
-                                                <button
-                                                    onClick={() => addTask(task.title, task.difficulty)}
-                                                    style={{
-                                                        color: 'var(--success)',
-                                                        fontSize: '0.8rem',
-                                                        fontWeight: '600'
-                                                    }}
-                                                >
-                                                    + {t('addToBoard')}
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
+            {quizTask && (
+                <QuizModal
+                    task={quizTask}
+                    onClose={() => {
+                        setQuizTask(null);
+                        setPendingTaskId(null);
+                    }}
+                    onComplete={onQuizPass}
+                />
             )}
         </div>
     );

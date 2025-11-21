@@ -1,11 +1,14 @@
 {
-  "name": "app",
+  "name": "fsdev-learn",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.3.0",
+  "author": "kalt7x",
+  "description": "Full Stack Learning Tracker",
   "type": "module",
   "main": "electron/main.cjs",
   "scripts": {
     "dev": "vite",
+    "app": "npm run electron:dev",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",

@@ -12,16 +12,21 @@ export const useTasks = () => {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
     }, [tasks]);
 
-    const addTask = (title, difficulty = 'medium') => {
+    const addTask = (title, difficulty, initialStatus = 'todo') => {
+        if (tasks.some(t => t.title === title)) return;
+
         const newTask = {
             id: Date.now().toString(),
             title,
-            status: 'todo', // todo, in-progress, done
-            difficulty, // easy, medium, hard
+            difficulty,
+            status: initialStatus,
             xp: calculateXP(difficulty),
             createdAt: new Date().toISOString()
         };
-        setTasks(prev => [newTask, ...prev]);
+
+        const newTasks = [...tasks, newTask];
+        setTasks(newTasks);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(newTasks));
     };
 
     const updateTaskStatus = (id, status) => {
@@ -30,11 +35,17 @@ export const useTasks = () => {
         ));
     };
 
+    const completeTask = (title) => {
+        setTasks(prev => prev.map(task =>
+            task.title === title ? { ...task, status: 'done', completedAt: new Date().toISOString() } : task
+        ));
+    };
+
     const deleteTask = (id) => {
         setTasks(prev => prev.filter(task => task.id !== id));
     };
 
-    return { tasks, addTask, updateTaskStatus, deleteTask };
+    return { tasks, addTask, updateTaskStatus, completeTask, deleteTask };
 };
 
 const calculateXP = (difficulty) => {

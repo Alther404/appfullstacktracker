@@ -1,6 +1,6 @@
 export const translations = {
     en: {
-        appTitle: "DevJourney",
+        appTitle: "FSdev Learn",
         level: "Level",
         streak: "Streak",
         days: "Days",
@@ -38,10 +38,37 @@ export const translations = {
         resources: "Library",
         devLog: "Daily DevLog",
         post: "Post",
-        focusAnalytics: "Focus Analytics"
+        focusAnalytics: "Focus Analytics",
+        nextStep: "Next Recommended Step",
+        startLearning: "Start Learning",
+        roadmapProgress: "Your Roadmap Progress",
+        projects: "Projects",
+        faq: "FAQ",
+        interviewPrep: "Interview Prep",
+        loading: "Loading...",
+        madeBy: "Made by kalt7x with AI support. Free to distribute.",
+        faq_q1: "How do I start learning?",
+        faq_a1: "Go to the Roadmap tab, click on the first item 'Internet Basics', and start exploring the resources. Once you feel confident, take the quiz or mark it as complete.",
+        faq_q2: "Is this really free?",
+        faq_a2: "Yes! FSdev Learn is completely free. We curate the best free resources from around the web (YouTube, MDN, freeCodeCamp).",
+        faq_q3: "How do I save my progress?",
+        faq_a3: "Your progress is automatically saved to your device's local storage. You can close the app and come back anytime.",
+        faq_q4: "What are XP and Levels for?",
+        faq_a4: "They are just for fun and motivation! Earn XP by completing tasks, projects, and quizzes to level up your developer rank.",
+        jokes: [
+            "Why do programmers prefer dark mode? Because light attracts bugs.",
+            "How many programmers does it take to change a light bulb? None, that's a hardware problem.",
+            "I told my wife she was drawing her eyebrows too high. She looked surprised.",
+            "There are 10 types of people in the world: those who understand binary, and those who don't.",
+            "A SQL query walks into a bar, walks up to two tables and asks, 'Can I join you?'",
+            "Programming is 10% writing code and 90% understanding why it's not working.",
+            "I write code so clean, even I don't understand it after a week.",
+            "Why did the developer go broke? Because he used up all his cache.",
+            "Algorithm: A word used by programmers when they don't want to explain what they did."
+        ]
     },
     ru: {
-        appTitle: "DevJourney",
+        appTitle: "FSdev Learn",
         level: "Уровень",
         streak: "Стрик",
         days: "Дн.",
@@ -79,6 +106,33 @@ export const translations = {
         resources: "Библиотека",
         devLog: "Дневник Разработчика",
         post: "Записать",
-        focusAnalytics: "Аналитика Фокуса"
+        focusAnalytics: "Аналитика Фокуса",
+        nextStep: "Следующий Шаг",
+        startLearning: "Начать Обучение",
+        roadmapProgress: "Твой Прогресс",
+        projects: "Проекты",
+        faq: "FAQ",
+        interviewPrep: "Собеседование",
+        loading: "Загрузка...",
+        madeBy: "Сделано kalt7x при поддержке AI. Распространение бесплатно.",
+        faq_q1: "Как начать обучение?",
+        faq_a1: "Перейдите на вкладку 'Карта Fullstack', выберите первую тему 'Internet Basics' и начните изучать ресурсы. Когда будете готовы, пройдите тест или отметьте как выполненное.",
+        faq_q2: "Это действительно бесплатно?",
+        faq_a2: "Да! FSdev Learn полностью бесплатен. Мы собираем лучшие бесплатные ресурсы со всего интернета (YouTube, MDN, freeCodeCamp).",
+        faq_q3: "Как сохранить прогресс?",
+        faq_a3: "Ваш прогресс автоматически сохраняется в локальном хранилище устройства. Вы можете закрыть приложение и вернуться в любое время.",
+        faq_q4: "Зачем нужны XP и Уровни?",
+        faq_a4: "Это для веселья и мотивации! Зарабатывайте XP, выполняя задачи, проекты и тесты, чтобы повышать свой ранг разработчика.",
+        jokes: [
+            "Почему программисты предпочитают темную тему? Потому что свет притягивает баги.",
+            "Сколько программистов нужно, чтобы вкрутить лампочку? Ни одного, это проблема аппаратного обеспечения.",
+            "Существует 10 типов людей: те, кто понимает двоичную систему, и те, кто нет.",
+            "SQL-запрос заходит в бар, подходит к двум столикам и спрашивает: 'Можно к вам присоединиться?'",
+            "Программирование — это 10% написания кода и 90% понимания, почему он не работает.",
+            "Я пишу код так чисто, что даже сам не понимаю его через неделю.",
+            "Почему разработчик разорился? Потому что он использовал весь свой кэш.",
+            "Алгоритм: Слово, которое используют программисты, когда не хотят объяснять, что они сделали.",
+            "Жена говорит мужу-программисту: 'Сходи в магазин, купи батон хлеба, если будут яйца — возьми десяток'. Муж возвращается с десятью батонами. Жена: 'Ты зачем столько хлеба купил?' Муж: 'Так яйца были'."
+        ]
     }
 };
